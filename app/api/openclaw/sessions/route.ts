@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 export async function GET() {
   try {
-    const VPS_URL = process.env.VPS_METRICS_URL || 'http://139.59.109.76:19999'
+    const VPS_URL = process.env.VPS_METRICS_URL || 'http://metrics.tomtom79.tech'
     
     const response = await fetch(`${VPS_URL}/api/openclaw/sessions`, {
       next: { revalidate: 0 }

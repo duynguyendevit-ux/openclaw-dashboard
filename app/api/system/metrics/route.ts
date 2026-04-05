@@ -26,7 +26,7 @@ const getMockMetrics = () => ({
 
 export async function GET() {
   try {
-    const VPS_METRICS_URL = process.env.VPS_METRICS_URL || 'http://139.59.109.76:19999/api/metrics'
+    const VPS_METRICS_URL = process.env.VPS_METRICS_URL || 'http://metrics.tomtom79.tech/api/metrics'
     
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 3000) // 3s timeout
