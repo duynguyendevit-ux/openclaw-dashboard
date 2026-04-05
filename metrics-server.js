@@ -44,7 +44,47 @@ async function getGpuInfo() {
   }
 }
 
-// Metrics endpoint
+// Get OpenClaw sessions
+async function getOpenClawSessions() {
+  try {
+    const { stdout } = await execAsync('openclaw sessions 2>/dev/null | tail -n +2')
+    const lines = stdout.trim().split('\n').filter(l => l.trim())
+    
+    const sessions = lines.map(line => {
+      const parts = line.trim().split(/\s+/)
+      if (parts.length < 4) return null
+      
+      const sessionKey = parts[1]
+      const lastActive = parts[2] + ' ' + parts[3]
+      const model = parts[4]
+      
+      return {
+        sessionKey,
+        kind: sessionKey.includes(':cron:') ? 'cron' : sessionKey.includes(':telegram:') ? 'telegram' : 'main',
+        lastMessageAt: lastActive,
+        model
+      }
+    }).filter(Boolean)
+    
+    return sessions
+  } catch {
+    return []
+  }
+}
+
+// Get OpenClaw cron jobs
+async function getOpenClawCron() {
+  try {
+    const { stdout } = await execAsync('openclaw cron status 2>/dev/null')
+    // Parse cron output - for now return mock data
+    // TODO: Implement proper parsing when cron command format is known
+    return []
+  } catch {
+    return []
+  }
+}
+
+// System metrics endpoint
 app.get('/api/metrics', async (req, res) => {
   try {
     const cpuUsage = await getCpuUsage()
@@ -76,6 +116,28 @@ app.get('/api/metrics', async (req, res) => {
   }
 })
 
+// OpenClaw sessions endpoint
+app.get('/api/openclaw/sessions', async (req, res) => {
+  try {
+    const sessions = await getOpenClawSessions()
+    res.json({ sessions })
+  } catch (error) {
+    console.error('Failed to fetch sessions:', error)
+    res.status(500).json({ sessions: [] })
+  }
+})
+
+// OpenClaw cron jobs endpoint
+app.get('/api/openclaw/cron', async (req, res) => {
+  try {
+    const jobs = await getOpenClawCron()
+    res.json({ jobs })
+  } catch (error) {
+    console.error('Failed to fetch cron jobs:', error)
+    res.status(500).json({ jobs: [] })
+  }
+})
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', uptime: os.uptime() })
@@ -84,4 +146,6 @@ app.get('/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`📊 Metrics API running on port ${PORT}`)
   console.log(`🌐 http://localhost:${PORT}/api/metrics`)
+  console.log(`🤖 http://localhost:${PORT}/api/openclaw/sessions`)
+  console.log(`⏰ http://localhost:${PORT}/api/openclaw/cron`)
 })
